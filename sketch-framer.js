@@ -23,15 +23,6 @@ function authorize_app_to_save(){
     }, true)
   }
 }
-function export_folder(){
-  var doc_folder = [[doc fileURL] path].replace([doc displayName], ''),
-      doc_name = [doc displayName].replace(".sketch",""),
-      folder = export_path.replace("{doc_name}",doc_name)
-  return doc_folder + folder + "/"
-}
-function image_folder(){
-  return export_folder() + "images/"
-}
 function make_export_folder(){
   var path = export_folder()
   make_folder(path + "/images")
@@ -175,6 +166,15 @@ function document_is_saved(){
 }
 function document_has_artboards(){
   return [[[doc currentPage] artboards] count] > 0
+}
+function export_folder(){
+  var doc_folder = [[doc fileURL] path].replace([doc displayName], ''),
+      doc_name = [doc displayName].replace(".sketch",""),
+      folder = export_path.replace("{doc_name}",doc_name)
+  return doc_folder + folder + "/"
+}
+function image_folder(){
+  return export_folder() + "images/"
 }
 function has_subviews(view){
   var sublayers = [view layers]
