@@ -2,11 +2,14 @@
 // ale@bohemiancoding.com
 
 
+if (!DEBUG) {
+  log = function(txt){}
+}
+
 // Steps
 function authorize_app_to_save(){
   if (!in_sandbox()) {
     log("✅ We’re not sandboxed")
-    return
   } else {
     log("⭕️ We’re sandboxed, asking for permission…")
     var home_folder = [@"~/" stringByExpandingTildeInPath]
@@ -35,7 +38,7 @@ function make_export_folder(){
 }
 function make_folder(path){
   if (in_sandbox()) {
-    AppSandboxFileAccess.init({message: "", prompt:  "", title: ""}).accessFilePath_withBlock_persistPermission(path, function(){
+    sandboxAccess.accessFilePath_withBlock_persistPermission(path, function(){
       [[NSFileManager defaultManager] createDirectoryAtPath:path withIntermediateDirectories:true attributes:null error:null]
     }, true)
   } else {
@@ -45,12 +48,11 @@ function make_folder(path){
 function export_assets_for_view(view){
   log("export_assets_for_view("+[view name]+")")
 
-  // TODO: Decide what to do with Pages
-  // TODO: Decide what to do with Artboards
+  make_folder(folder_path_for_view(view))
 
-  if([[[doc currentPage] artboards] count] > 0){
-    log("Here be artboards")
+  if (document_has_artboards()) {
     var current_artboard = [view parentArtboard],
+        current_artboard_name = [current_artboard name],
         did_disable_background = false
 
     if([current_artboard includeBackgroundColorInExport]){
@@ -64,30 +66,47 @@ function export_assets_for_view(view){
     }
   }
 
-  make_folder(image_folder() + [current_artboard name])
+  // Hide children if they will be exported individually
+  if(has_subviews(view)){
+    var sublayers = subviews_for_view(view),
+        hidden_children = [NSMutableArray new]
 
-  var filename = image_folder() + [current_artboard name] + "/" + [view name] + ".png",
+    for(var v=0; v < [sublayers count]; v++){
+      var sublayer = [sublayers objectAtIndex:v]
+      log("We should hide " + [sublayer name] + ", as it will be exported individually")
+      [sublayer setIsVisible:false]
+      hidden_children.addObject(sublayer)
+    }
+  }
+
+  // Actual writing of asset
+  var filename = asset_path_for_view(view),
       slice = [[MSSliceMaker slicesFromExportableLayer:view] firstObject]
-
-      log(filename)
   slice.page = [doc currentPage]
-
   var imageData = [MSSliceExporter dataForSlice:slice format:@"png"]
 
   if (in_sandbox()) {
-    sandboxAccess.accessFilePath_withBlock_persistPermission(image_folder(), function(){
-      [imageData writeToFile:filename atomically:YES]
+    sandboxAccess.accessFilePath_withBlock_persistPermission(folder_path_for_view(view), function(){
+      [imageData writeToFile:filename atomically:false]
     }, true)
   } else {
-    [imageData writeToFile:filename atomically:YES]
+    [imageData writeToFile:filename atomically:false]
   }
 
-  if (did_disable_background) {
+  // Restore background color for layer
+  if(current_artboard != null && did_disable_background){
     [current_artboard setIncludeBackgroundColorInExport:true]
+  }
+
+  // Make sublayers visible again
+  if (has_subviews(view)) {
+    for(var s=0; s < [hidden_children count]; s++){
+      var show_me = [hidden_children objectAtIndex:s]
+      [show_me setIsVisible:true]
+    }
   }
 }
 function extract_views_from_document(){
-  log("Extracting views from document")
   var everything = [[doc currentPage] children],
       views = []
 
@@ -95,7 +114,6 @@ function extract_views_from_document(){
     var obj = [everything objectAtIndex:i]
 
     if (view_should_be_extracted(obj)) {
-      log("    " + [obj name] + " will become a view")
       views.push(obj)
     }
 
@@ -104,6 +122,7 @@ function extract_views_from_document(){
   return views
 }
 function save_structure_to_json(data){
+  log("save_structure_to_json()")
   save_file_from_string(export_folder() + json_filename, data.getJSON())
 }
 
@@ -114,23 +133,74 @@ function alert(msg){
   // [doc showMessage:msg]
   // but maybe that's too subtle for an alert :)
 }
+function asset_path_for_view(view){
+  var r = folder_path_for_view(view) + [view name] + ".png"
+  return r
+}
+function image_path_for_view(view){
+  var r = ""
+  if(document_has_artboards()) {
+    r = "images/" + [[view parentArtboard] name] + "/" + [view name] + ".png"
+  } else {
+    r = "images/" + [view name] + ".png"
+  }
+  return r
+}
+function folder_path_for_view(view){
+  var r = ""
+  if(document_has_artboards()) {
+    r = image_folder() + [[view parentArtboard] name] + "/"
+  } else {
+    r = image_folder()
+  }
+  return r
+}
 function check_for_errors(){
   var error = ""
   if (!document_is_saved()) {
     error += "— Please save your document to export it."
   }
-  /*
-  if (document_has_artboards()){
-    error += "\n— Artboard support is still a work in progress."
-  }
-  */
+
+  // if ([[doc pages] count] > 1) {
+  //   error += "\n— We'll export just the first page of your document"
+  // }
+  //
+  // if (document_has_artboards()){
+  //   error += "\n— Artboard support is still a work in progress."
+  // }
+
   return error
 }
 function document_is_saved(){
   return [doc fileURL] != null
 }
 function document_has_artboards(){
-  return [[[doc currentPage] artboards] count] > 0]
+  return [[[doc currentPage] artboards] count] > 0
+}
+function has_subviews(view){
+  var sublayers = [view layers]
+  for(var v=0; v < [sublayers count]; v++){
+    var sublayer = [sublayers objectAtIndex:v]
+    if(view_should_be_extracted(sublayer)){
+      return true
+    }
+  }
+  return false
+}
+function subviews_for_view(view){
+  var sublayers = [view layers],
+      subviews = [NSMutableArray new]
+  for(var v=0; v < [sublayers count]; v++){
+    var sublayer = [sublayers objectAtIndex:v]
+    if(view_should_be_extracted(sublayer)){
+      subviews.addObject(sublayer)
+    }
+  }
+  if ([subviews count] > 0) {
+    return subviews
+  } else {
+    return null
+  }
 }
 function is_artboard(layer){
   return [layer isMemberOfClass:MSArtboardGroup]
@@ -140,19 +210,21 @@ function msg(msg){
 }
 function save_file_from_string(filename,the_string) {
   var path = [@"" stringByAppendingString:filename],
-      str = [@"" stringByAppendingString:the_string];
+      str = [@"" stringByAppendingString:the_string]
 
   if (in_sandbox()) {
     sandboxAccess.accessFilePath_withBlock_persistPermission(filename, function(){
-      [str writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:null];
+      [str writeToFile:path atomically:false encoding:NSUTF8StringEncoding error:null];
     }, true)
   } else {
-    [str writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:null];
+    [str writeToFile:path atomically:false encoding:NSUTF8StringEncoding error:null];
   }
 }
 function view_should_be_extracted(view){
-  log("  view_should_be_extracted("+[view className]+")")
-  return [view isMemberOfClass:MSLayerGroup] || is_artboard(view) || [view name].match(/\+/)
+  // log("  view_should_be_extracted("+[view className]+")?")
+  var r = [view isMemberOfClass:MSLayerGroup] || is_artboard(view) || [view name].match(/\+/)
+  // log("    " + r)
+  return r
 }
 
 // Classes
@@ -160,42 +232,14 @@ function MetadataExtractor(){
   this.data = []
 }
 MetadataExtractor.prototype.addView = function(view){
-  var metadata = extract_metadata_from_view(view)
+  log("MetadataExtractor.addView("+view+")")
+  var metadata = this.extract_metadata_from_view(view)
   this.data.push(metadata)
 }
 MetadataExtractor.prototype.getJSON = function(){
-  return "[" + this.data.join(",\n") + "]"
+  return JSON.stringify(this.data, null, '\t')
 }
-function extract_metadata_from_view(view){
-  // log("extract_metadata_from_view("+[view name]+")")
-  // log([view children])
-  /*
-	{
-		"id": 3,
-		"name": "Background",
-		"layerFrame": {
-			"x": 0,
-			"y": 0,
-			"width": 320,
-			"height": 568
-		},
-		"maskFrame": null,
-		"image": {
-			"path": "images/Background.png",
-			"frame": {
-				"x": 0,
-				"y": 0,
-				"width": 320,
-				"height": 568
-			}
-		},
-		"imageType": "png",
-		"children": [
-
-		],
-		"modification": "1834086366"
-	}
-  */
+MetadataExtractor.prototype.extract_metadata_from_view = function(view){
   var metadata = {
     id: "" + [view objectID],
     name: "" + [view name],
@@ -207,7 +251,7 @@ function extract_metadata_from_view(view){
     },
     maskFrame: null,
     image: {
-      path: "images/" + [[view parentArtboard] name] + "/" + [view name] + ".png",
+      path: image_path_for_view(view),
       frame: {
         x: [[view frame] x],
         y: [[view frame] y],
@@ -218,11 +262,22 @@ function extract_metadata_from_view(view){
     imageType: "png",
     modification: null
   }
-  if ([view children]) {
-    // Insert metadata for children
+
+  // Does view have subviews?
+  if(has_subviews(view)){
+    var subviews = subviews_for_view(view),
+        children_metadata = []
+    for(var c=0; c < [subviews count]; c++){
+      var child = [subviews objectAtIndex:c]
+      // TODO: fix children position, by adding parent offset
+      children_metadata.push(this.extract_metadata_from_view(child))
+    }
+    metadata.children = children_metadata
+    // metadata.children = []
   } else {
     metadata.children = []
   }
+
   // Correct position for artboards:
   if (is_artboard(view)) {
     metadata.layerFrame.x = 0
@@ -230,5 +285,5 @@ function extract_metadata_from_view(view){
     metadata.image.frame.x = 0
     metadata.image.frame.y = 0
   }
-  return JSON.stringify(metadata, null, '\t')
+  return metadata
 }
