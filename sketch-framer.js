@@ -61,11 +61,14 @@ function export_assets_for_view(view){
     var sublayers = subviews_for_view(view),
         hidden_children = [NSMutableArray new]
 
-    for(var v=0; v < [sublayers count]; v++){
-      var sublayer = [sublayers objectAtIndex:v]
-      log("We should hide " + [sublayer name] + ", as it will be exported individually")
-      [sublayer setIsVisible:false]
-      hidden_children.addObject(sublayer)
+    var loop = [sublayers objectEnumerator],
+        sublayer
+    while(sublayer = [loop nextObject]){
+      if ([sublayer isVisible]) {
+        // log("We should hide " + [sublayer name] + ", as it will be exported individually")
+        [sublayer setIsVisible:false]
+        hidden_children.addObject(sublayer)
+      }
     }
   }
 
@@ -100,13 +103,12 @@ function extract_views_from_document(){
   var everything = [[doc currentPage] children],
       views = []
 
-  for(var i=0; i < [everything count]; i++){
-    var obj = [everything objectAtIndex:i]
-
+  var loop = [everything objectEnumerator],
+      obj;
+  while (obj = [loop nextObject]) {
     if (view_should_be_extracted(obj)) {
       views.push(obj)
     }
-
   }
   views = [[NSArray alloc] initWithArray:views]
   return views
@@ -265,13 +267,12 @@ MetadataExtractor.prototype.extract_metadata_from_view = function(view){
   if(has_subviews(view)){
     var subviews = subviews_for_view(view),
         children_metadata = []
-    for(var c=0; c < [subviews count]; c++){
-      var child = [subviews objectAtIndex:c]
+    var loop = [subviews objectEnumerator]
+    while(child = [loop nextObject]){
       // TODO: fix children position, by adding parent offset
       children_metadata.push(this.extract_metadata_from_view(child))
     }
     metadata.children = children_metadata
-    // metadata.children = []
   } else {
     metadata.children = []
   }
