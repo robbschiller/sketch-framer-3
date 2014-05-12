@@ -1,0 +1,39 @@
+// Export to Framer 3 (ctrl alt cmd f)
+log("🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶")
+
+// Setup
+var export_path = "imported/{doc_name}", // This is relative to the saved document's path
+    json_filename = 'layers.json'
+
+#import 'sandbox.js'
+#import 'sketch-framer.js'
+
+// Some sanity checks, before we begin:
+var error = check_for_errors()
+
+if(error) { // Stop execution and display error
+  log(error)
+  alert("Make sure to fix these before we can continue:\n\n" + error)
+} else { // Let's go
+  log("💎 Framer, here we go…")
+
+  // Setup
+  var ViewsMetadata = new MetadataExtractor()
+
+  // Authorize
+  authorize_app_to_save()
+  make_export_folder()
+
+  var views = extract_views_from_document()
+
+  for(var i=0; i< [views count]; i++){
+    var view = [views objectAtIndex:i]
+    export_assets_for_view(view)
+    ViewsMetadata.addView(view)
+  }
+
+  save_structure_to_json(ViewsMetadata)
+
+  // All done!
+  [doc showMessage:"Export Complete"]
+}
