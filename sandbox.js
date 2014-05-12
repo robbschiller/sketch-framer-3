@@ -190,9 +190,3 @@ var sandboxAccess = AppSandboxFileAccess.init({
   prompt:  "Authorize",
   title: "Sketch Authorization"
 })
-
-/*
-if (show_errors && in_sandbox()) {
-  [[NSApplication sharedApplication] displayDialog:"Please use this plugin with Sketch Beta. You can search 'Sketch Beta' in Google to download it.\n\n(Or manually copy framer.js info the framer folder)." withTitle:"Sketch Framer known bugs"]
-}
-*/
