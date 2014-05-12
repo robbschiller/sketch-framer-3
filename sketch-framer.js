@@ -231,6 +231,7 @@ function view_should_be_extracted(view){
 // Classes
 function MetadataExtractor(){
   this.data = []
+  this.hideArtboards = false
 }
 MetadataExtractor.prototype.addView = function(view){
   var metadata = this.extract_metadata_from_view(view)
@@ -283,6 +284,12 @@ MetadataExtractor.prototype.extract_metadata_from_view = function(view){
     metadata.layerFrame.y = 0
     metadata.image.frame.x = 0
     metadata.image.frame.y = 0
+    if(this.hideArtboards == false){
+      metadata.visible = true
+      this.hideArtboards = true
+    } else {
+      metadata.visible = false
+    }
   }
   return metadata
 }
