@@ -9,9 +9,9 @@ if (!DEBUG) {
 // Steps
 function authorize_app_to_save(){
   if (!in_sandbox()) {
-    log("✅ We’re not sandboxed")
+    log("— We’re not sandboxed")
   } else {
-    log("⭕️ We’re sandboxed, asking for permission…")
+    log("— We’re sandboxed, asking for permission…")
     var home_folder = [@"~/" stringByExpandingTildeInPath]
     var sandboxAccess = AppSandboxFileAccess.init({
       message: "Please authorize Sketch to write to your home folder. Hopefully, you will only need to do this once.",
@@ -46,7 +46,6 @@ function make_folder(path){
   }
 }
 function export_assets_for_view(view){
-  log("export_assets_for_view("+[view name]+")")
 
   make_folder(folder_path_for_view(view))
 
@@ -56,10 +55,10 @@ function export_assets_for_view(view){
         did_disable_background = false
 
     if([current_artboard includeBackgroundColorInExport]){
-      log("Artboard has a background color set to export")
+      // log("Artboard has a background color set to export")
       if(!is_artboard(view)){
         // disable the background color if we're not exporting the actual artboard
-        log(" so we'll momentarily disable it")
+        // log(" so we'll momentarily disable it")
         [current_artboard setIncludeBackgroundColorInExport:false]
         did_disable_background = true
       }
@@ -122,7 +121,7 @@ function extract_views_from_document(){
   return views
 }
 function save_structure_to_json(data){
-  log("save_structure_to_json()")
+  // log("save_structure_to_json()")
   save_file_from_string(export_folder() + json_filename, data.getJSON())
 }
 
@@ -232,7 +231,6 @@ function MetadataExtractor(){
   this.data = []
 }
 MetadataExtractor.prototype.addView = function(view){
-  log("MetadataExtractor.addView("+view+")")
   var metadata = this.extract_metadata_from_view(view)
   this.data.push(metadata)
 }
