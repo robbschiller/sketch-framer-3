@@ -1,12 +1,15 @@
 // Export to Framer 3 (ctrl alt cmd f)
-log("🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶")
 
+(function(){
 // Setup
-var export_path = "imported/{doc_name}", // This is relative to the saved document's path
-    json_filename = 'layers.json'
+var export_path = "{doc_name}.framer", // This is relative to the saved document's path
+    json_filename = 'layers.json',
+    DEBUG = true
 
 #import 'sandbox.js'
 #import 'sketch-framer.js'
+
+log("🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶🔶")
 
 // Some sanity checks, before we begin:
 var error = check_for_errors()
@@ -37,3 +40,4 @@ if(error) { // Stop execution and display error
   // All done!
   [doc showMessage:"Export Complete"]
 }
+}())
