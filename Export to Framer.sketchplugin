@@ -28,11 +28,26 @@ if(error) { // Stop execution and display error
   make_export_folder()
 
   var views = extract_views_from_document()
-
   for(var i=0; i< [views count]; i++){
     var view = [views objectAtIndex:i]
     export_assets_for_view(view)
-    ViewsMetadata.addView(view)
+  }
+
+  // Traverse hierarchy to extract metadata
+  if (document_has_artboards()) {
+    var artboards = [[doc currentPage] artboards]
+    for(var a=0; a < [artboards count]; a++){
+      var artboard = [artboards objectAtIndex:a]
+      ViewsMetadata.addView(artboard)
+    }
+  } else {
+    var layers = [[doc currentPage] layers]
+    for(var l=0; l < [layers count]; l++){
+      var lay = [layers objectAtIndex:l]
+      if(view_should_be_extracted(lay)){
+        ViewsMetadata.addView(lay)
+      }
+    }
   }
 
   save_structure_to_json(ViewsMetadata)
