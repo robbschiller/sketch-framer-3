@@ -206,6 +206,73 @@ function subviews_for_view(view){
 function is_artboard(layer){
   return [layer isMemberOfClass:MSArtboardGroup]
 }
+function mask_bounds(layer){
+  // log("mask_bounds("+layer+")")
+
+  var sublayers = [layer layers],
+      effective_mask = null
+
+  for (var sub=0; sub < [sublayers count]; sub++) {
+    var current = [sublayers objectAtIndex:sub]
+
+    if(current && [current hasClippingMask]) {
+      // If a native mask is detected, rename it and disable it (for now) so we can export its contents
+      var _name = [current name] + "@@mask";
+      [current setName:_name];
+      [current setHasClippingMask:false];
+      // log("Disabling mask " + [current name]);
+
+      if (!effective_mask) {
+        // Only the bottom-most one will be effective
+        // log("Effective mask " + _name)
+        effective_mask = current
+      }
+    }
+  }
+
+  if (effective_mask) {
+    return coordinates_for(effective_mask);
+  } else {
+    return null;
+  }
+}
+function calculate_real_position_for(layer) {
+  /*
+  var gkrect = [GKRect rectWithRect:[layer rectByAccountingForStyleSize:[[layer absoluteRect] rect]]],
+      absrect = [layer absoluteRect];
+
+  var rulerDeltaX = [absrect rulerX] - [absrect x],
+      rulerDeltaY = [absrect rulerY] - [absrect y],
+      GKRectRulerX = [gkrect x] + rulerDeltaX,
+      GKRectRulerY = [gkrect y] + rulerDeltaY;
+
+  return {
+    x: Math.round(GKRectRulerX),
+    y: Math.round(GKRectRulerY)
+  }
+  */
+  return { x: 0, y: 0 }
+}
+function coordinates_for(layer){
+  var frame = [layer frame],
+      gkrect = [GKRect rectWithRect:[layer rectByAccountingForStyleSize:[[layer absoluteRect] rect]]],
+      absrect = [layer absoluteRect]
+
+  var rulerDeltaX = [absrect rulerX] - [absrect x],
+      rulerDeltaY = [absrect rulerY] - [absrect y],
+      GKRectRulerX = [gkrect x] + rulerDeltaX,
+      GKRectRulerY = [gkrect y] + rulerDeltaY,
+      x = Math.round(GKRectRulerX),
+      y = Math.round(GKRectRulerY)
+
+  r = {
+    x: x,
+    y: y,
+    width:  [gkrect width],
+    height: [gkrect height]
+  }
+  return r
+}
 function msg(msg){
   [doc showMessage:msg]
 }
@@ -241,27 +308,23 @@ MetadataExtractor.prototype.getJSON = function(){
   return JSON.stringify(this.data, null, '\t')
 }
 MetadataExtractor.prototype.extract_metadata_from_view = function(view){
+  // var maskFrame = mask_bounds(view)
+  var frame = [view frame],
+      w = [frame width],
+      h = [frame height]
+
   var metadata = {
     id: "" + [view objectID],
     name: "" + [view name],
-    layerFrame: {
-      x: [[view frame] x],
-      y: [[view frame] y],
-      width: [[view frame] width],
-      height: [[view frame] height]
-    },
     maskFrame: null,
+    layerFrame: {},
     image: {
       path: image_path_for_view(view),
-      frame: {
-        x: [[view frame] x],
-        y: [[view frame] y],
-        width: [[view frame] width],
-        height: [[view frame] height]
-      }
+      frame: {}
     },
     imageType: "png",
-    modification: null
+    modification: null,
+    visible: [view isVisible] ? true : false
   }
 
   // Does view have subviews?
@@ -278,18 +341,20 @@ MetadataExtractor.prototype.extract_metadata_from_view = function(view){
     metadata.children = []
   }
 
-  // Correct position for artboards:
+  // Reset position for artboards:
   if (is_artboard(view)) {
-    metadata.layerFrame.x = 0
-    metadata.layerFrame.y = 0
-    metadata.image.frame.x = 0
-    metadata.image.frame.y = 0
     if(this.hideArtboards == false){
       metadata.visible = true
       this.hideArtboards = true
     } else {
       metadata.visible = false
     }
+    metadata.layerFrame.x = metadata.image.frame.x = 0
+    metadata.layerFrame.y = metadata.image.frame.y = 0
+    metadata.layerFrame.width = metadata.image.frame.width = w
+    metadata.layerFrame.height = metadata.image.frame.height = h
+  } else {
+    metadata.layerFrame = metadata.image.frame = coordinates_for(view)
   }
   return metadata
 }
