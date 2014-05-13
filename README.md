@@ -1,5 +1,22 @@
 # sketch-framer-3
 
+## Getting Started #NOT
+
+Run:
+
+    rake
+
+to build the `sketch-framer-cmd.js` file
+
+After that, open a sample .sketch file in Sketch, and try running the script with:
+
+    ./coscript sketch-framer-cmd.js
+
+That should (in theory) export the current document. Problem is: it doesn't. **coscript is segfaulting**.
+
+Any help is welcome :)
+
+
 ## TODO
 
 - [x] hidden layers should remain hidden after export
