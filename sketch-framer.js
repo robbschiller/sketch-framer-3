@@ -33,7 +33,7 @@ function make_folder(path){
   }
 }
 function export_assets_for_view(view){
-
+  log("export_assets_for_view("+view+")")
   make_folder(folder_path_for_view(view))
 
   if (document_has_artboards()) {
@@ -57,7 +57,7 @@ function export_assets_for_view(view){
     var sublayers = subviews_for_view(view),
         hidden_children = [NSMutableArray new]
 
-    for (var s = 0; s < sublayers.length; s++) {
+    for (var s = 0; s < [sublayers count]; s++) {
       var sublayer = [sublayers objectAtIndex:s]
       if ([sublayer isVisible]) {
         // print("We should hide " + [sublayer name] + ", as it will be exported individually")
@@ -68,10 +68,13 @@ function export_assets_for_view(view){
   }
 
   // Actual writing of asset
+  var slicemaker = NSClassFromString("MSSliceMaker"),
+      sliceexporter = NSClassFromString("MSSliceExporter")
+
   var filename = asset_path_for_view(view),
-      slice = [[MSSliceMaker slicesFromExportableLayer:view] firstObject]
+      slice = [[slicemaker slicesFromExportableLayer:view] firstObject]
   slice.page = [doc currentPage]
-  var imageData = [MSSliceExporter dataForSlice:slice format:@"png"]
+  var imageData = [sliceexporter dataForSlice:slice format:@"png"]
 
   if (in_sandbox()) {
     sandboxAccess.accessFilePath_withBlock_persistPermission(folder_path_for_view(view), function(){
@@ -98,7 +101,7 @@ function extract_views_from_document(){
   var everything = [[doc currentPage] children],
       views = []
 
-  for (var i = 0; i < everything.length; i++) {
+  for (var i = 0; i < [everything count]; i++) {
     var obj = [everything objectAtIndex:i]
     if (view_should_be_extracted(obj)) {
       views.push(obj)
@@ -197,7 +200,7 @@ function subviews_for_view(view){
   }
 }
 function is_artboard(layer){
-  return [layer isMemberOfClass:MSArtboardGroup]
+  return ([layer className] == "MSArtboardGroup")
 }
 function mask_bounds(layer){
   var sublayers = [layer layers],
@@ -262,7 +265,9 @@ function save_file_from_string(filename,the_string) {
   }
 }
 function view_should_be_extracted(view){
-  return ( [view isMemberOfClass:MSLayerGroup] || is_artboard(view) || [view name].match(/\+/) )
+  log("view_should_be_extracted("+view+")")
+  return ( [view className] == "MSLayerGroup" || is_artboard(view) )
+  // return ( [view isMemberOfClass:[MSLayerGroup class]] || is_artboard(view) || [view name].match(/\+/) )
 }
 
 // Classes

@@ -8,11 +8,11 @@ if(error) { // Stop execution and display error
   var ViewsMetadata = new MetadataExtractor()
 
   // Authorize
-  // authorize_app_to_save()
+  authorize_app_to_save()
   make_export_folder()
 
   var views = extract_views_from_document()
-  for (var v = 0; v < views.length; v++) {
+  for (var v = 0; v < [views count]; v++) {
     var view = [views objectAtIndex:v]
     export_assets_for_view(view)
   }
@@ -27,7 +27,7 @@ if(error) { // Stop execution and display error
   } else {
     var layers = [[doc currentPage] layers]
     if (layers) {
-      for (var i = 0; i < layers.length; i++) {
+      for (var i = 0; i < [layers count]; i++) {
         var lay = [layers objectAtIndex:i]
         if(view_should_be_extracted(lay)){
           ViewsMetadata.addView(lay)
