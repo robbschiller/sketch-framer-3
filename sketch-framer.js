@@ -282,14 +282,12 @@ MetadataExtractor.prototype.getJSON = function(){
 }
 MetadataExtractor.prototype.extract_metadata_from_view = function(view){
   // var maskFrame = mask_bounds(view)
-  var frame = [view frame],
-      w = [frame width],
-      h = [frame height]
+  var maskFrame = null
 
   var metadata = {
     id: "" + [view objectID],
     name: "" + [view name],
-    maskFrame: null,
+    maskFrame: maskFrame,
     layerFrame: {},
     image: {
       path: image_path_for_view(view),
@@ -329,5 +327,13 @@ MetadataExtractor.prototype.extract_metadata_from_view = function(view){
     metadata.visible = [view isVisible] ? true : false
     metadata.layerFrame = metadata.image.frame = coordinates_for(view)
   }
+
+  // if ([layer name].indexOf("@@mask") != -1) {
+  //   var _name = [layer name].replace("@@mask", "");
+  //   log("Re-enabling mask " + _name);
+  //   [layer setHasClippingMask:true];
+  //   [layer setName:_name];
+  // }
+
   return metadata
 }
