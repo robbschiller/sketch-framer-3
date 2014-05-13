@@ -26,17 +26,21 @@ if(error) { // Stop execution and display error
     }
   } else {
     var layers = [[doc currentPage] layers]
-    var layerloop = [layers objectEnumerator]
-    while(lay = [layerloop nextObject]){
-      if(view_should_be_extracted(lay)){
-        ViewsMetadata.addView(lay)
+    if (layers) {
+      for (var i = 0; i < layers.length; i++) {
+        var lay = [layers objectAtIndex:i]
+        if(view_should_be_extracted(lay)){
+          ViewsMetadata.addView(lay)
+        }
       }
+    } else {
+      alert("WHY U NO LAYERS IN UR DOC")
     }
   }
 
   save_structure_to_json(ViewsMetadata)
 
   // All done!
-  log("Export complete")
+  print("Export complete")
   [doc showMessage:"Export Complete"]
 }
