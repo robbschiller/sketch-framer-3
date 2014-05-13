@@ -24,8 +24,8 @@ function authorize_app_to_save(){
   }
 }
 function make_export_folder(){
-  var path = export_folder()
-  make_folder(path + "/images")
+  var path = image_folder()
+  make_folder(path)
 }
 function make_folder(path){
   if (in_sandbox()) {
@@ -156,10 +156,6 @@ function check_for_errors(){
   // if ([[doc pages] count] > 1) {
   //   error += "\n— We'll export just the first page of your document"
   // }
-  //
-  // if (document_has_artboards()){
-  //   error += "\n— Artboard support is still a work in progress."
-  // }
 
   return error
 }
@@ -207,14 +203,11 @@ function is_artboard(layer){
   return [layer isMemberOfClass:MSArtboardGroup]
 }
 function mask_bounds(layer){
-  // log("mask_bounds("+layer+")")
-
   var sublayers = [layer layers],
       effective_mask = null
 
-  for (var sub=0; sub < [sublayers count]; sub++) {
-    var current = [sublayers objectAtIndex:sub]
-
+  for (var i = 0; i < [sublayers count]; i++) {
+    var current = [sublayers objectAtIndex:i]
     if(current && [current hasClippingMask]) {
       // If a native mask is detected, rename it and disable it (for now) so we can export its contents
       var _name = [current name] + "@@mask";
@@ -236,24 +229,8 @@ function mask_bounds(layer){
     return null;
   }
 }
-function calculate_real_position_for(layer) {
-  /*
-  var gkrect = [GKRect rectWithRect:[layer rectByAccountingForStyleSize:[[layer absoluteRect] rect]]],
-      absrect = [layer absoluteRect];
-
-  var rulerDeltaX = [absrect rulerX] - [absrect x],
-      rulerDeltaY = [absrect rulerY] - [absrect y],
-      GKRectRulerX = [gkrect x] + rulerDeltaX,
-      GKRectRulerY = [gkrect y] + rulerDeltaY;
-
-  return {
-    x: Math.round(GKRectRulerX),
-    y: Math.round(GKRectRulerY)
-  }
-  */
-  return { x: 0, y: 0 }
-}
 function coordinates_for(layer){
+  // log("coordinates_for("+layer+")")
   var frame = [layer frame],
       gkrect = [GKRect rectWithRect:[layer rectByAccountingForStyleSize:[[layer absoluteRect] rect]]],
       absrect = [layer absoluteRect]
@@ -265,13 +242,12 @@ function coordinates_for(layer){
       x = Math.round(GKRectRulerX),
       y = Math.round(GKRectRulerY)
 
-  r = {
+  return {
     x: x,
     y: y,
     width:  [gkrect width],
     height: [gkrect height]
   }
-  return r
 }
 function msg(msg){
   [doc showMessage:msg]
@@ -289,10 +265,7 @@ function save_file_from_string(filename,the_string) {
   }
 }
 function view_should_be_extracted(view){
-  // log("  view_should_be_extracted("+[view className]+")?")
-  var r = [view isMemberOfClass:MSLayerGroup] || is_artboard(view) || [view name].match(/\+/)
-  // log("    " + r)
-  return r
+  return ( [view isMemberOfClass:MSLayerGroup] || is_artboard(view) || [view name].match(/\+/) )
 }
 
 // Classes
@@ -323,8 +296,7 @@ MetadataExtractor.prototype.extract_metadata_from_view = function(view){
       frame: {}
     },
     imageType: "png",
-    modification: null,
-    visible: [view isVisible] ? true : false
+    modification: null
   }
 
   // Does view have subviews?
@@ -333,7 +305,6 @@ MetadataExtractor.prototype.extract_metadata_from_view = function(view){
         children_metadata = []
     var loop = [subviews objectEnumerator]
     while(child = [loop nextObject]){
-      // TODO: fix children position, by adding parent offset
       children_metadata.push(this.extract_metadata_from_view(child))
     }
     metadata.children = children_metadata
@@ -349,11 +320,13 @@ MetadataExtractor.prototype.extract_metadata_from_view = function(view){
     } else {
       metadata.visible = false
     }
+    var frame = [view frame]
     metadata.layerFrame.x = metadata.image.frame.x = 0
     metadata.layerFrame.y = metadata.image.frame.y = 0
-    metadata.layerFrame.width = metadata.image.frame.width = w
-    metadata.layerFrame.height = metadata.image.frame.height = h
+    metadata.layerFrame.width = metadata.image.frame.width = [frame width]
+    metadata.layerFrame.height = metadata.image.frame.height = [frame height]
   } else {
+    metadata.visible = [view isVisible] ? true : false
     metadata.layerFrame = metadata.image.frame = coordinates_for(view)
   }
   return metadata
