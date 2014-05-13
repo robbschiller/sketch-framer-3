@@ -1,16 +1,12 @@
 // sketch-framer.js
 // ale@bohemiancoding.com
 
-// Setup
-var export_path = "{doc_name}.framer", // This is relative to the saved document's path
-    json_filename = 'layers.json'
-
 // Steps
 function authorize_app_to_save(){
   if (!in_sandbox()) {
-    log("- We’re not sandboxed")
+    print("- We’re not sandboxed")
   } else {
-    log("- We’re sandboxed, asking for permission…")
+    print("- We’re sandboxed, asking for permission…")
     var home_folder = "/Users/" + NSUserName()
     var sandboxAccess = AppSandboxFileAccess.init({
       message: "Please authorize Sketch to write to your home folder. Hopefully, you will only need to do this once.",
@@ -18,7 +14,7 @@ function authorize_app_to_save(){
       title: "Sketch Authorization"
     })
     sandboxAccess.accessFilePath_withBlock_persistPermission(home_folder, function(){
-      log("  Sandbox access granted")
+      print("  Sandbox access granted")
     }, true)
   }
 }
@@ -26,6 +22,7 @@ function make_export_folder(){
   var path = image_folder()
   make_folder(path)
 }
+
 function make_folder(path){
   if (in_sandbox()) {
     sandboxAccess.accessFilePath_withBlock_persistPermission(path, function(){
@@ -45,10 +42,10 @@ function export_assets_for_view(view){
         did_disable_background = false
 
     if([current_artboard includeBackgroundColorInExport]){
-      // log("Artboard has a background color set to export")
+      // print("Artboard has a background color set to export")
       if(!is_artboard(view)){
         // disable the background color if we're not exporting the actual artboard
-        // log(" so we'll momentarily disable it")
+        // print(" so we'll momentarily disable it")
         [current_artboard setIncludeBackgroundColorInExport:false]
         did_disable_background = true
       }
@@ -63,7 +60,7 @@ function export_assets_for_view(view){
     for (var s = 0; s < sublayers.length; s++) {
       var sublayer = [sublayers objectAtIndex:s]
       if ([sublayer isVisible]) {
-        // log("We should hide " + [sublayer name] + ", as it will be exported individually")
+        // print("We should hide " + [sublayer name] + ", as it will be exported individually")
         [sublayer setIsVisible:false]
         hidden_children.addObject(sublayer)
       }
@@ -111,11 +108,14 @@ function extract_views_from_document(){
   return views
 }
 function save_structure_to_json(data){
-  // log("save_structure_to_json()")
-  save_file_from_string(export_folder() + json_filename, data.getJSON())
+  // print("save_structure_to_json()")
+  save_file_from_string(export_folder() + "layers.json", data.getJSON())
 }
 
+
+
 // Utils
+
 function alert(msg){
   [[NSApplication sharedApplication] displayDialog:msg withTitle:"Sketch Framer found some errors"]
   // alternatively, we could do:
@@ -126,6 +126,7 @@ function asset_path_for_view(view){
   var r = folder_path_for_view(view) + [view name] + ".png"
   return r
 }
+
 function image_path_for_view(view){
   var r = ""
   if(document_has_artboards()) {
@@ -164,9 +165,8 @@ function document_has_artboards(){
 }
 function export_folder(){
   var doc_folder = [[doc fileURL] path].replace([doc displayName], ''),
-      doc_name = [doc displayName].replace(".sketch",""),
-      folder = export_path.replace("{doc_name}",doc_name)
-  return doc_folder + folder + "/"
+      doc_name = [doc displayName].replace(".sketch","")
+  return doc_folder + doc_name + "/"
 }
 function image_folder(){
   return export_folder() + "images/"
@@ -210,11 +210,11 @@ function mask_bounds(layer){
       var _name = [current name] + "@@mask";
       [current setName:_name];
       [current setHasClippingMask:false];
-      log("Disabling mask " + [current name]);
+      print("Disabling mask " + [current name]);
 
       if (!effective_mask) {
         // Only the bottom-most one will be effective
-        log("Effective mask " + _name)
+        print("Effective mask " + _name)
         effective_mask = current
       }
     }
@@ -227,7 +227,7 @@ function mask_bounds(layer){
   }
 }
 function coordinates_for(layer){
-  // log("coordinates_for("+layer+")")
+  // print("coordinates_for("+layer+")")
   var frame = [layer frame],
       gkrect = [GKRect rectWithRect:[layer rectByAccountingForStyleSize:[[layer absoluteRect] rect]]],
       absrect = [layer absoluteRect]
@@ -328,7 +328,7 @@ MetadataExtractor.prototype.extract_metadata_from_view = function(view){
 
   // if ([layer name].indexOf("@@mask") != -1) {
   //   var _name = [layer name].replace("@@mask", "");
-  //   log("Re-enabling mask " + _name);
+  //   print("Re-enabling mask " + _name);
   //   [layer setHasClippingMask:true];
   //   [layer setName:_name];
   // }
