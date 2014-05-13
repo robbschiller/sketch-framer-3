@@ -1,10 +1,9 @@
 // sketch-framer.js
 // ale@bohemiancoding.com
 
-
-if (!DEBUG) {
-  log = function(txt){}
-}
+// Setup
+var export_path = "{doc_name}.framer", // This is relative to the saved document's path
+    json_filename = 'layers.json'
 
 // Steps
 function authorize_app_to_save(){
