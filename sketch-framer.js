@@ -11,8 +11,8 @@ function authorize_app_to_save(){
   if (!in_sandbox()) {
     log("- We’re not sandboxed")
   } else {
-    var home_folder = [@"~/" stringByExpandingTildeInPath]
     log("- We’re sandboxed, asking for permission…")
+    var home_folder = "/Users/" + NSUserName()
     var sandboxAccess = AppSandboxFileAccess.init({
       message: "Please authorize Sketch to write to your home folder. Hopefully, you will only need to do this once.",
       prompt:  "Authorize",
