@@ -9,17 +9,17 @@ if (!DEBUG) {
 // Steps
 function authorize_app_to_save(){
   if (!in_sandbox()) {
-    log("— We’re not sandboxed")
+    log("- We’re not sandboxed")
   } else {
-    log("— We’re sandboxed, asking for permission…")
     var home_folder = [@"~/" stringByExpandingTildeInPath]
+    log("- We’re sandboxed, asking for permission…")
     var sandboxAccess = AppSandboxFileAccess.init({
       message: "Please authorize Sketch to write to your home folder. Hopefully, you will only need to do this once.",
       prompt:  "Authorize",
       title: "Sketch Authorization"
     })
     sandboxAccess.accessFilePath_withBlock_persistPermission(home_folder, function(){
-      log("Sandbox access granted")
+      log("  Sandbox access granted")
     }, true)
   }
 }
@@ -213,11 +213,11 @@ function mask_bounds(layer){
       var _name = [current name] + "@@mask";
       [current setName:_name];
       [current setHasClippingMask:false];
-      // log("Disabling mask " + [current name]);
+      log("Disabling mask " + [current name]);
 
       if (!effective_mask) {
         // Only the bottom-most one will be effective
-        // log("Effective mask " + _name)
+        log("Effective mask " + _name)
         effective_mask = current
       }
     }

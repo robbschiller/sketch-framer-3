@@ -39,7 +39,8 @@ var AppSandboxFileAccessPersist = {
     return [NSString stringWithFormat:@"bd_%1$@", urlStr];
   },
   bookmarkDataForURL: function(url) {
-    // log("AppSandboxFileAccessPersist.bookmarkDataForURL('"+ url +"')")
+    log("    AppSandboxFileAccessPersist.bookmarkDataForURL('"+ url +"')")
+    log("      " + [url className])
     var defaults = [NSUserDefaults standardUserDefaults];
 
     // loop through the bookmarks one path at a time down the URL
@@ -117,7 +118,7 @@ var AppSandboxFileAccess = {
     this.persistPermissionURL([NSURL fileURLWithPath:path]);
   },
   persistPermissionURL: function(url) {
-    // log("AppSandboxFileAccess.persistPermissionURL("+url+")")
+    log("    AppSandboxFileAccess.persistPermissionURL("+url+")")
     // store the sandbox permissions
     url = [[url URLByStandardizingPath] URLByResolvingSymlinksInPath]
     var bookmarkData = [url bookmarkDataWithOptions:NSURLBookmarkCreationWithSecurityScope
@@ -145,9 +146,10 @@ var AppSandboxFileAccess = {
     var bookmarkData = AppSandboxFileAccessPersist.bookmarkDataForURL(fileUrl);
 
     if (bookmarkData) {
-      // log("Bookmark data found")
+      log("      Bookmark data found")
       // resolve the bookmark data into an NSURL object that will allow us to use the file
       var bookmarkDataIsStale;
+      // TODO: bookmarkDataIsStale is not really used, and I suspect this makes sketch-framer not work properly
       allowedUrl = [NSURL URLByResolvingBookmarkData:bookmarkData options:NSURLBookmarkResolutionWithSecurityScope|NSURLBookmarkResolutionWithoutUI relativeToURL:nil bookmarkDataIsStale:bookmarkDataIsStale error:null];
       // if the bookmark data is stale, we'll create new bookmark data further down
       if (bookmarkDataIsStale) {
