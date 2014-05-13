@@ -8,12 +8,12 @@ if(error) { // Stop execution and display error
   var ViewsMetadata = new MetadataExtractor()
 
   // Authorize
-  authorize_app_to_save()
+  // authorize_app_to_save()
   make_export_folder()
 
   var views = extract_views_from_document()
-  var loop = [views objectEnumerator]
-  while(view = [loop nextObject]){
+  for (var v = 0; v < views.length; v++) {
+    var view = [views objectAtIndex:v]
     export_assets_for_view(view)
   }
 
