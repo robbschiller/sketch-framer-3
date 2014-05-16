@@ -4,41 +4,28 @@ var error = check_for_errors()
 if(error) { // Stop execution and display error
   alert("Make sure to fix these before we can continue:\n\n" + error)
 } else { // Let's go
+
+  // When DRY_RUN is true, files won't be saved
+  var DRY_RUN = false
+
   // Setup
-  var ViewsMetadata = new MetadataExtractor()
+  var ViewsMetadata = new MetadataExtractor(doc)
 
-  // Authorize
-  authorize_app_to_save()
-  make_export_folder()
-
-  var views = extract_views_from_document()
-  for (var v = 0; v < [views count]; v++) {
-    var view = [views objectAtIndex:v]
-    export_assets_for_view(view)
-  }
-
-  // Traverse hierarchy to extract metadata
-  if (document_has_artboards()) {
-    var artboards = [[doc currentPage] artboards]
-    for(var a=0; a < [artboards count]; a++){
-      var artboard = [artboards objectAtIndex:a]
-      ViewsMetadata.addView(artboard)
+  var home_folder = "/Users/" + NSUserName()
+  new AppSandbox().authorize(home_folder, function(){
+    make_export_folder()
+    save_structure_to_json(ViewsMetadata)
+    var views = ViewsMetadata.getViews()
+    for (var v = 0; v < views.length; v++) {
+      var view = views[v]
+      log(view)
+      export_assets_for_view(view)
     }
-  } else {
-    var layers = [[doc currentPage] layers]
-    if (layers) {
-      for (var i = 0; i < [layers count]; i++) {
-        var lay = [layers objectAtIndex:i]
-        if(view_should_be_extracted(lay)){
-          ViewsMetadata.addView(lay)
-        }
-      }
-    } else {
-      alert("WHY U NO LAYERS IN UR DOC")
-    }
-  }
+  })
 
-  save_structure_to_json(ViewsMetadata)
+  views = nil;
+  ViewsMetadata = nil;
+  error = nil;
 
   // All done!
   print("Export complete")
