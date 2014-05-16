@@ -11,36 +11,40 @@ AppSandbox.prototype.authorize = function(path, callback){
   log("AppSandbox.authorize("+path+")")
   var success = false
 
-  var url = [[[NSURL fileURLWithPath:path] URLByStandardizingPath] URLByResolvingSymlinksInPath],
-      allowedUrl = false
+  if (in_sandbox) {
+    var url = [[[NSURL fileURLWithPath:path] URLByStandardizingPath] URLByResolvingSymlinksInPath],
+        allowedUrl = false
 
-  // Key for bookmark data:
-  var bd_key = this.key_for_url(url)
+    // Key for bookmark data:
+    var bd_key = this.key_for_url(url)
 
-  // this.clear_key(bd_key) // For debug only, this clears the key we're looking for :P
+    // this.clear_key(bd_key) // For debug only, this clears the key we're looking for :P
 
-  // Bookmark
-  var bookmark = this.get_data_for_key(bd_key)
-  if(!bookmark){
-    log("– No bookmark found, let's create one")
-    var target = this.file_picker(url)
-    bookmark = [target bookmarkDataWithOptions:NSURLBookmarkCreationWithSecurityScope
-                    includingResourceValuesForKeys:nil
-                    relativeToURL:nil
-                    error:{}]
-    // Store bookmark
-    this.set_data_for_key(bookmark,bd_key)
+    // Bookmark
+    var bookmark = this.get_data_for_key(bd_key)
+    if(!bookmark){
+      log("– No bookmark found, let's create one")
+      var target = this.file_picker(url)
+      bookmark = [target bookmarkDataWithOptions:NSURLBookmarkCreationWithSecurityScope
+                      includingResourceValuesForKeys:nil
+                      relativeToURL:nil
+                      error:{}]
+      // Store bookmark
+      this.set_data_for_key(bookmark,bd_key)
+    } else {
+      log("– Bookmark found")
+    }
+    log("  " + bookmark)
+
+    var allowedURL = [NSURL URLByResolvingBookmarkData:bookmark
+                            options:NSURLBookmarkResolutionWithSecurityScope
+                            relativeToURL:nil
+                            bookmarkDataIsStale:nil
+                            error:{}]
+    if(allowedURL) {
+      success = true
+    }
   } else {
-    log("– Bookmark found")
-  }
-  log("  " + bookmark)
-
-  var allowedURL = [NSURL URLByResolvingBookmarkData:bookmark
-                          options:NSURLBookmarkResolutionWithSecurityScope
-                          relativeToURL:nil
-                          bookmarkDataIsStale:nil
-                          error:{}]
-  if(allowedURL) {
     success = true
   }
 
