@@ -61,7 +61,8 @@ function export_assets_for_view(view){
       slice = [[MSSliceMaker slicesFromExportableLayer:view] firstObject]
       log(filename)
       log(slice)
-  slice.page = [doc currentPage]
+  slice.page = [[doc currentPage] copyLightweight] // Seems to work in MAS version too?
+  // slice.page = [doc currentPage]
   var imageData = [MSSliceExporter dataForSlice:slice format:@"png"]
   [imageData writeToFile:filename atomically:false]
 
